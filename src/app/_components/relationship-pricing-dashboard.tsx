@@ -54,7 +54,7 @@ export default function RelationshipPricingDashboard() {
         <div className={styles.hero}>
           <div className={styles.heroCopy}>
             <p className={styles.eyebrow}>Relationship Pricing and Profitability</p>
-            <h1>
+            <h1 className={styles.heroHeadline}>
               Full relationship economics across term debt, revolvers, letters of
               credit, deposits, and treasury services.
             </h1>
