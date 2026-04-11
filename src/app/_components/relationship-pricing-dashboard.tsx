@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import styles from "../page.module.css";
 import {
   calculateRelationship,
@@ -8,6 +8,65 @@ import {
   type ProductInput,
   type RelationshipInput,
 } from "../_lib/relationship-model";
+
+
+
+type Mode = "dark" | "light";
+
+type MarketTile = {
+  symbol: string;
+  last: string;
+  change: string;
+  trend: "up" | "down";
+};
+
+const marketTape: MarketTile[] = [
+  { symbol: "UST 10Y", last: "4.18%", change: "+0.04", trend: "up" },
+  { symbol: "SOFR", last: "5.08%", change: "+0.01", trend: "up" },
+  { symbol: "DXY", last: "103.44", change: "-0.22", trend: "down" },
+  { symbol: "CDX IG", last: "57.1", change: "-1.8", trend: "down" },
+];
+
+const headlineMetrics = [
+  { label: "Relationship RAROC", value: "14.2%", footnote: "Target 12.0%" },
+  { label: "Pre-tax Profit", value: "$42.6M", footnote: "YTD Run Rate" },
+  { label: "Economic Capital", value: "$79.3M", footnote: "Basel View" },
+  { label: "Pricing Gap", value: "+18 bps", footnote: "vs hurdle" },
+];
+
+function parseSignedValue(value: string) {
+  const numeric = Number.parseFloat(value.replace(/[^0-9+-.]/g, ""));
+  return Number.isFinite(numeric) ? numeric : 0;
+}
+
+function buildMarketAdjustedRelationship(
+  relationship: RelationshipInput,
+  mode: Mode,
+): RelationshipInput {
+  const marketPressure = marketTape.reduce((total, tile) => {
+    const direction = tile.trend === "up" ? 1 : -1;
+    return total + direction * Math.abs(parseSignedValue(tile.change));
+  }, 0);
+
+  const pricingGapAnchor = parseSignedValue(
+    headlineMetrics.find((metric) => metric.label === "Pricing Gap")?.value ?? "0",
+  );
+
+  const spreadLiftBps = Math.max(Math.round((pricingGapAnchor + marketPressure) * 6), 0);
+  const hurdleAdjustment = mode === "dark" ? 0.15 : 0.05;
+
+  return {
+    ...relationship,
+    capitalHurdlePct: relationship.capitalHurdlePct + hurdleAdjustment,
+    depositsSpreadBps: Math.max(relationship.depositsSpreadBps - marketPressure * 2, 0),
+    products: relationship.products.map((product) => ({
+      ...product,
+      spreadBps:
+        product.type === "letterOfCredit" ? product.spreadBps : product.spreadBps + spreadLiftBps,
+      feeBps: product.type === "letterOfCredit" ? product.feeBps + spreadLiftBps : product.feeBps,
+    })),
+  };
+}
 
 const currency = new Intl.NumberFormat("en-US", {
   style: "currency",
@@ -45,8 +104,16 @@ function updateProduct(
 export default function RelationshipPricingDashboard() {
   const [relationship, setRelationship] =
     useState<RelationshipInput>(initialRelationship);
+  const mode: Mode = "dark";
 
-  const result = calculateRelationship(relationship);
+  const adjustedRelationship = useMemo(
+    () => buildMarketAdjustedRelationship(relationship, mode),
+    [relationship, mode],
+  );
+  const result = useMemo(
+    () => calculateRelationship(adjustedRelationship),
+    [adjustedRelationship],
+  );
 
   return (
     <main className={styles.page}>
@@ -99,7 +166,7 @@ export default function RelationshipPricingDashboard() {
           <MetricCard
             label="Relationship RAROC"
             value={`${percent.format(result.rarocPct)}%`}
-            detail={`Hurdle ${percent.format(relationship.capitalHurdlePct)}%`}
+            detail={`Hurdle ${percent.format(adjustedRelationship.capitalHurdlePct)}%`}
           />
           <MetricCard
             label="Profit Above Hurdle"
