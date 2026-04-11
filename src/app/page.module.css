@@ -10,9 +10,9 @@
   --negative: #ff5f68;
 
   min-height: 100vh;
-  padding: 24px;
+  padding: 20px;
   background:
-    radial-gradient(circle at top right, rgba(246, 167, 0, 0.15), transparent 28%),
+    radial-gradient(circle at top right, rgba(246, 167, 0, 0.14), transparent 30%),
     var(--bg);
   color: var(--text);
   font-family: "Segoe UI", "Inter", Arial, sans-serif;
@@ -21,13 +21,13 @@
 .terminal[data-theme="light"] {
   --bg: #eef3f9;
   --surface: #ffffff;
-  --surface-soft: #f6f9fd;
+  --surface-soft: #f4f8fc;
   --border: #c4d2e4;
   --text: #061120;
-  --text-muted: #51657a;
+  --text-muted: #4f6478;
   --accent: #b67900;
-  --positive: #118a45;
-  --negative: #ce1b25;
+  --positive: #117940;
+  --negative: #bb1b24;
 }
 
 .topbar {
@@ -35,7 +35,7 @@
   justify-content: space-between;
   align-items: flex-start;
   gap: 16px;
-  margin-bottom: 16px;
+  margin-bottom: 14px;
 }
 
 .kicker {
@@ -47,7 +47,7 @@
 }
 
 .topbar h1 {
-  font-size: clamp(1.4rem, 3vw, 2rem);
+  font-size: clamp(1.2rem, 2.8vw, 1.9rem);
 }
 
 .modeButton {
@@ -60,41 +60,47 @@
   cursor: pointer;
 }
 
-.ticker,
-.grid {
-  display: grid;
-  gap: 12px;
-}
-
 .ticker {
+  display: grid;
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  margin-bottom: 16px;
+  gap: 10px;
+  margin-bottom: 14px;
 }
 
 .tickerTile,
-.metricCard {
+.metricCard,
+.sectionCard,
+.overviewCard {
   border: 1px solid var(--border);
   background: linear-gradient(150deg, var(--surface), var(--surface-soft));
   border-radius: 10px;
-  padding: 12px;
 }
 
 .tickerTile {
   display: grid;
-  gap: 6px;
+  gap: 5px;
+  padding: 10px;
 }
 
 .tickerTile span,
-.metricCard span {
+.metricCard span,
+.panelLabel,
+.sectionEyebrow,
+.productType,
+.productScore span,
+.productMetric span,
+.statementRow span,
+.snapshotCard span,
+.field span {
   color: var(--text-muted);
-  font-size: 12px;
+  font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.08em;
 }
 
 .tickerTile strong,
 .metricCard strong {
-  font-size: 1.25rem;
+  font-size: 1.1rem;
 }
 
 .tickerTile em {
@@ -110,35 +116,252 @@
   color: var(--negative);
 }
 
-.grid {
-  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+.page {
+  display: grid;
+  gap: 14px;
+}
+
+.overviewCard {
+  padding: 16px;
+}
+
+.hero {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 14px;
+}
+
+.eyebrow {
+  font-size: 12px;
+  color: var(--accent);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.heroHeadline {
+  font-size: clamp(1rem, 2vw, 1.3rem);
+  line-height: 1.35;
+  margin-bottom: 10px;
+}
+
+.heroText {
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.heroPanel {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px;
+  display: grid;
+  gap: 10px;
+  align-content: start;
+}
+
+.metricsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+  margin-top: 12px;
 }
 
 .metricCard {
+  padding: 11px;
   display: grid;
-  gap: 10px;
-  min-height: 132px;
+  gap: 8px;
 }
 
 .metricCard p {
   color: var(--text-muted);
-  font-size: 0.88rem;
+  font-size: 0.82rem;
+}
+
+.workspace {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 14px;
+}
+
+.column {
+  display: grid;
+  gap: 14px;
+  align-content: start;
+}
+
+.sectionCard {
+  padding: 12px;
+}
+
+.sectionHeading h2 {
+  font-size: 1rem;
+  margin-top: 4px;
+}
+
+.formGrid {
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 8px;
+}
+
+.field {
+  display: grid;
+  gap: 6px;
+}
+
+.field span {
+  display: flex;
+  justify-content: space-between;
+}
+
+.field small {
+  opacity: 0.9;
+}
+
+.field input {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+
+.productList {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.productCard {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px;
+  background: var(--surface);
+}
+
+.productHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.productHeader h3 {
+  font-size: 1rem;
+}
+
+.productScore {
+  text-align: right;
+}
+
+.productMetrics {
+  margin-top: 10px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 8px;
+}
+
+.productMetric {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px;
+  background: var(--surface-soft);
+  display: grid;
+  gap: 5px;
+}
+
+.statement {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.statementRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.statementStrong strong {
+  color: var(--accent);
+}
+
+.statementMuted strong {
+  color: var(--text-muted);
+}
+
+.guidanceList {
+  margin-top: 12px;
+  display: grid;
+  gap: 9px;
+}
+
+.guidanceItem {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+.guidanceItem p {
+  color: var(--text-muted);
+  font-size: 0.84rem;
+  margin-top: 4px;
+}
+
+.badgeWarn,
+.badgeGood {
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 999px;
+  padding: 4px 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.badgeWarn {
+  color: #2b0a0d;
+  background: var(--negative);
+}
+
+.badgeGood {
+  color: #04250f;
+  background: var(--positive);
+}
+
+.snapshotGrid {
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 8px;
+}
+
+.snapshotCard {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px;
+  background: var(--surface);
+  display: grid;
+  gap: 5px;
+}
+
+@media (max-width: 1024px) {
+  .workspace,
+  .hero {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 640px) {
   .terminal {
-    padding: 14px;
+    padding: 12px;
   }
 
   .topbar {
     flex-direction: column;
   }
-}
-
-
-.heroHeadline {
-  font-size: clamp(1.05rem, 2vw, 1.35rem);
-  line-height: 1.35;
-  letter-spacing: -0.01em;
-  color: #c41212;
 }

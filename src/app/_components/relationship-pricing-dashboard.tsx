@@ -104,7 +104,12 @@ function updateProduct(
 export default function RelationshipPricingDashboard() {
   const [relationship, setRelationship] =
     useState<RelationshipInput>(initialRelationship);
-  const mode: Mode = "dark";
+  const [mode, setMode] = useState<Mode>("dark");
+
+  const modeCopy = useMemo(
+    () => (mode === "dark" ? "Switch to Light" : "Switch to Dark"),
+    [mode],
+  );
 
   const adjustedRelationship = useMemo(
     () => buildMarketAdjustedRelationship(relationship, mode),
@@ -116,7 +121,32 @@ export default function RelationshipPricingDashboard() {
   );
 
   return (
-    <main className={styles.page}>
+    <div className={styles.terminal} data-theme={mode}>
+      <header className={styles.topbar}>
+        <div>
+          <p className={styles.kicker}>PRICING & PROFITABILITY MONITOR</p>
+          <h1>Relationship Analytics Terminal</h1>
+        </div>
+        <button
+          type="button"
+          className={styles.modeButton}
+          onClick={() => setMode((current) => (current === "dark" ? "light" : "dark"))}
+        >
+          {modeCopy}
+        </button>
+      </header>
+
+      <section className={styles.ticker} aria-label="Market tape">
+        {marketTape.map((tile) => (
+          <article key={tile.symbol} className={styles.tickerTile}>
+            <span>{tile.symbol}</span>
+            <strong>{tile.last}</strong>
+            <em data-trend={tile.trend}>{tile.change}</em>
+          </article>
+        ))}
+      </section>
+
+      <main className={styles.page}>
       <section className={styles.overviewCard}>
         <div className={styles.hero}>
           <div className={styles.heroCopy}>
@@ -600,7 +630,8 @@ export default function RelationshipPricingDashboard() {
           </div>
         </div>
       </section>
-    </main>
+      </main>
+    </div>
   );
 }
 
