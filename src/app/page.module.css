@@ -1,142 +1,136 @@
-.page {
-  --background: #fafafa;
-  --foreground: #fff;
+.terminal {
+  --bg: #05070b;
+  --surface: #0b1118;
+  --surface-soft: #131a23;
+  --border: #233345;
+  --text: #d8e5f5;
+  --text-muted: #89a0ba;
+  --accent: #f6a700;
+  --positive: #3ce17f;
+  --negative: #ff5f68;
 
-  --text-primary: #000;
-  --text-secondary: #666;
+  min-height: 100vh;
+  padding: 24px;
+  background:
+    radial-gradient(circle at top right, rgba(246, 167, 0, 0.15), transparent 28%),
+    var(--bg);
+  color: var(--text);
+  font-family: "Segoe UI", "Inter", Arial, sans-serif;
+}
 
+.terminal[data-theme="light"] {
+  --bg: #eef3f9;
+  --surface: #ffffff;
+  --surface-soft: #f6f9fd;
+  --border: #c4d2e4;
+  --text: #061120;
+  --text-muted: #51657a;
+  --accent: #b67900;
+  --positive: #118a45;
+  --negative: #ce1b25;
+}
+
+.topbar {
   display: flex;
-  align-items: start;
   justify-content: space-between;
-  gap: 14px;
+  align-items: flex-start;
+  gap: 16px;
   margin-bottom: 16px;
 }
 
-.sectionHeading h2,
-.productHeader h3 {
-  margin-top: 5px;
-  font-size: 1.16rem;
-  line-height: 1.2;
-  letter-spacing: -0.025em;
+.kicker {
+  font-size: 12px;
+  letter-spacing: 0.18em;
+  font-weight: 700;
+  color: var(--accent);
+  margin-bottom: 8px;
 }
 
-.formGrid {
+.topbar h1 {
+  font-size: clamp(1.4rem, 3vw, 2rem);
+}
+
+.modeButton {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.ticker,
+.grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
 }
 
-.field {
+.ticker {
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  margin-bottom: 16px;
+}
+
+.tickerTile,
+.metricCard {
+  border: 1px solid var(--border);
+  background: linear-gradient(150deg, var(--surface), var(--surface-soft));
+  border-radius: 10px;
+  padding: 12px;
+}
+
+.tickerTile {
   display: grid;
   gap: 6px;
 }
 
-.field span {
-  display: flex;
-  flex: 1;
-  width: 100%;
-  max-width: 900px;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 40px;
-  background-color: var(--foreground);
-  padding: 96px 60px;
-}
-
-.productCard {
-  padding: 18px;
-  background:
-    linear-gradient(180deg, #ffffff 0%, #fbfdfe 100%);
-}
-
-.productHeader {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  text-align: left;
-  gap: 16px;
-}
-
-.intro h1 {
-  max-width: 520px;
-  font-size: 40px;
-  font-weight: 600;
-  line-height: 48px;
-  letter-spacing: -2.4px;
-  text-wrap: balance;
-  color: var(--text-primary);
-}
-
-.intro p {
-  max-width: 620px;
-  font-size: 18px;
-  line-height: 32px;
-  text-wrap: balance;
-  color: var(--text-secondary);
-}
-
-.kpiSection {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 16px;
-  width: 100%;
-}
-
-.kpiCard {
-  border: 1px solid #e8e8e8;
-  border-radius: 16px;
-  padding: 20px;
-}
-
-.kpiCard h2 {
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--text-secondary);
-  margin-bottom: 12px;
-}
-
-.kpiCard p {
-  font-size: 28px;
-  font-weight: 600;
-  line-height: 1.2;
-  color: var(--text-primary);
-}
-
-.kpiCard span {
-  display: inline-block;
-  margin-top: 8px;
+.tickerTile span,
+.metricCard span {
+  color: var(--text-muted);
   font-size: 12px;
-  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
 }
 
-@media (max-width: 900px) {
-  .kpiSection {
-    grid-template-columns: 1fr;
-  }
+.tickerTile strong,
+.metricCard strong {
+  font-size: 1.25rem;
 }
 
-@media (max-width: 720px) {
-  .page {
+.tickerTile em {
+  font-style: normal;
+  font-weight: 700;
+}
+
+.tickerTile em[data-trend="up"] {
+  color: var(--positive);
+}
+
+.tickerTile em[data-trend="down"] {
+  color: var(--negative);
+}
+
+.grid {
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+}
+
+.metricCard {
+  display: grid;
+  gap: 10px;
+  min-height: 132px;
+}
+
+.metricCard p {
+  color: var(--text-muted);
+  font-size: 0.88rem;
+}
+
+@media (max-width: 640px) {
+  .terminal {
     padding: 14px;
   }
 
-  .intro h1 {
-    font-size: 32px;
-    line-height: 40px;
-    letter-spacing: -1.92px;
-  }
-}
-
-@media (prefers-color-scheme: dark) {
-  .page {
-    --background: #000;
-    --foreground: #000;
-
-    --text-primary: #ededed;
-    --text-secondary: #999;
-  }
-
-  .kpiCard {
-    border-color: #1f1f1f;
+  .topbar {
+    flex-direction: column;
   }
 }
