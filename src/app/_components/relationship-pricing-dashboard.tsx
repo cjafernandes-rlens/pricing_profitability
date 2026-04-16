@@ -12,6 +12,7 @@ import {
 
 
 type Mode = "dark" | "light";
+type Workflow = "pricing" | "servicing" | "admin";
 
 type MarketTile = {
   symbol: string;
@@ -63,7 +64,10 @@ function buildMarketAdjustedRelationship(
       ...product,
       spreadBps:
         product.type === "letterOfCredit" ? product.spreadBps : product.spreadBps + spreadLiftBps,
-      feeBps: product.type === "letterOfCredit" ? product.feeBps + spreadLiftBps : product.feeBps,
+      feeBps:
+        product.type === "letterOfCredit" && product.feeInputMode === "bps"
+          ? product.feeBps + spreadLiftBps
+          : product.feeBps,
     })),
   };
 }
@@ -101,10 +105,43 @@ function updateProduct(
   );
 }
 
+function updateProductMode(
+  products: ProductInput[],
+  productId: string,
+  field: "feeInputMode" | "upfrontFeeInputMode",
+  value: "bps" | "dollar",
+) {
+  return products.map((product) =>
+    product.id === productId ? { ...product, [field]: value } : product,
+  );
+}
+
+function toBpsFromAmount(amount: number, commitment: number) {
+  if (commitment <= 0) {
+    return 0;
+  }
+
+  return (amount / commitment) * 10_000;
+}
+
+function toAmountFromBps(bps: number, commitment: number) {
+  return commitment * (bps / 10_000);
+}
+
 export default function RelationshipPricingDashboard() {
   const [relationship, setRelationship] =
     useState<RelationshipInput>(initialRelationship);
   const [mode, setMode] = useState<Mode>("dark");
+  const [workflow, setWorkflow] = useState<Workflow>("pricing");
+  const [adminEntry, setAdminEntry] = useState({
+    context: "relationship",
+    referenceName: relationship.company,
+    product: relationship.products[0]?.name ?? "Term Loan A",
+    commitment: relationship.products[0]?.commitment ?? 0,
+    pdPct: 2,
+    lgdPct: 30,
+    servicingCost: relationship.products[0]?.servicingCost ?? 0,
+  });
 
   const modeCopy = useMemo(
     () => (mode === "dark" ? "Switch to Light" : "Switch to Dark"),
@@ -146,7 +183,36 @@ export default function RelationshipPricingDashboard() {
         ))}
       </section>
 
+      <section className={styles.workflowBar} aria-label="Workflow selector">
+        <button
+          type="button"
+          className={styles.workflowButton}
+          data-active={workflow === "pricing"}
+          onClick={() => setWorkflow("pricing")}
+        >
+          Pricing Studio
+        </button>
+        <button
+          type="button"
+          className={styles.workflowButton}
+          data-active={workflow === "servicing"}
+          onClick={() => setWorkflow("servicing")}
+        >
+          Servicing Studio
+        </button>
+        <button
+          type="button"
+          className={styles.workflowButton}
+          data-active={workflow === "admin"}
+          onClick={() => setWorkflow("admin")}
+        >
+          Admin Studio
+        </button>
+      </section>
+
       <main className={styles.page}>
+      {workflow === "pricing" && (
+      <>
       <section className={styles.overviewCard}>
         <div className={styles.hero}>
           <div className={styles.heroCopy}>
@@ -347,12 +413,18 @@ export default function RelationshipPricingDashboard() {
                         onChange={(value) =>
                           setRelationship((current) => ({
                             ...current,
-                            products: updateProduct(
-                              current.products,
-                              product.id,
-                              "commitment",
-                              value,
-                            ),
+                            products: current.products.map((candidate) => {
+                              if (candidate.id !== product.id) {
+                                return candidate;
+                              }
+
+                              return {
+                                ...candidate,
+                                commitment: value,
+                                feeAmount: toAmountFromBps(candidate.feeBps, value),
+                                upfrontFeeAmount: toAmountFromBps(candidate.upfrontFeeBps, value),
+                              };
+                            }),
                           }))
                         }
                       />
@@ -405,35 +477,97 @@ export default function RelationshipPricingDashboard() {
                           }))
                         }
                       />
+                      {product.id === "term-loan" && (
+                        <SelectField
+                          label="Recurring Fee Units"
+                          value={product.feeInputMode}
+                          options={["bps", "dollar"]}
+                          onChange={(value) =>
+                            setRelationship((current) => ({
+                              ...current,
+                              products: updateProductMode(
+                                current.products,
+                                product.id,
+                                "feeInputMode",
+                                value as "bps" | "dollar",
+                              ),
+                            }))
+                          }
+                        />
+                      )}
                       <Field
                         label="Recurring Fee"
-                        value={product.feeBps}
-                        suffix="bps"
+                        value={product.feeInputMode === "bps" ? product.feeBps : product.feeAmount}
+                        suffix={product.feeInputMode === "bps" ? "bps" : "$"}
                         onChange={(value) =>
                           setRelationship((current) => ({
                             ...current,
-                            products: updateProduct(
-                              current.products,
-                              product.id,
-                              "feeBps",
-                              value,
-                            ),
+                            products: current.products.map((candidate) => {
+                              if (candidate.id !== product.id) {
+                                return candidate;
+                              }
+
+                              return candidate.feeInputMode === "bps"
+                                ? {
+                                    ...candidate,
+                                    feeBps: value,
+                                    feeAmount: toAmountFromBps(value, candidate.commitment),
+                                  }
+                                : {
+                                    ...candidate,
+                                    feeAmount: value,
+                                    feeBps: toBpsFromAmount(value, candidate.commitment),
+                                  };
+                            }),
                           }))
                         }
                       />
+                      {product.id === "term-loan" && (
+                        <SelectField
+                          label="Upfront Fee Units"
+                          value={product.upfrontFeeInputMode}
+                          options={["bps", "dollar"]}
+                          onChange={(value) =>
+                            setRelationship((current) => ({
+                              ...current,
+                              products: updateProductMode(
+                                current.products,
+                                product.id,
+                                "upfrontFeeInputMode",
+                                value as "bps" | "dollar",
+                              ),
+                            }))
+                          }
+                        />
+                      )}
                       <Field
                         label="Upfront Fee"
-                        value={product.upfrontFeeBps}
-                        suffix="bps"
+                        value={
+                          product.upfrontFeeInputMode === "bps"
+                            ? product.upfrontFeeBps
+                            : product.upfrontFeeAmount
+                        }
+                        suffix={product.upfrontFeeInputMode === "bps" ? "bps" : "$"}
                         onChange={(value) =>
                           setRelationship((current) => ({
                             ...current,
-                            products: updateProduct(
-                              current.products,
-                              product.id,
-                              "upfrontFeeBps",
-                              value,
-                            ),
+                            products: current.products.map((candidate) => {
+                              if (candidate.id !== product.id) {
+                                return candidate;
+                              }
+
+                              return candidate.upfrontFeeInputMode === "bps"
+                                ? {
+                                    ...candidate,
+                                    upfrontFeeBps: value,
+                                    upfrontFeeAmount: toAmountFromBps(value, candidate.commitment),
+                                  }
+                                : {
+                                    ...candidate,
+                                    upfrontFeeAmount: value,
+                                    upfrontFeeBps: toBpsFromAmount(value, candidate.commitment),
+                                  };
+                            }),
                           }))
                         }
                       />
@@ -480,22 +614,6 @@ export default function RelationshipPricingDashboard() {
                               current.products,
                               product.id,
                               "capitalBps",
-                              value,
-                            ),
-                          }))
-                        }
-                      />
-                      <Field
-                        label="Servicing Cost"
-                        value={product.servicingCost}
-                        suffix="$"
-                        onChange={(value) =>
-                          setRelationship((current) => ({
-                            ...current,
-                            products: updateProduct(
-                              current.products,
-                              product.id,
-                              "servicingCost",
                               value,
                             ),
                           }))
@@ -630,6 +748,166 @@ export default function RelationshipPricingDashboard() {
           </div>
         </div>
       </section>
+      </>
+      )}
+
+      {workflow === "servicing" && (
+        <section className={styles.sectionCard}>
+          <div className={styles.sectionHeading}>
+            <div>
+              <p className={styles.sectionEyebrow}>Servicing Studio</p>
+              <h2>Product servicing and credit loss drivers</h2>
+            </div>
+          </div>
+          <div className={styles.productList}>
+            {relationship.products.map((product) => (
+              <article key={`${product.id}-servicing`} className={styles.productCard}>
+                <div className={styles.productHeader}>
+                  <div>
+                    <p className={styles.productType}>{product.type}</p>
+                    <h3>{product.name}</h3>
+                  </div>
+                </div>
+                <div className={styles.formGrid}>
+                  <Field
+                    label="Commitment"
+                    value={product.commitment}
+                    suffix="$"
+                    onChange={(value) =>
+                      setRelationship((current) => ({
+                        ...current,
+                        products: updateProduct(current.products, product.id, "commitment", value),
+                      }))
+                    }
+                  />
+                  <Field
+                    label="PD"
+                    value={product.pdPct ?? 2}
+                    suffix="%"
+                    step="0.01"
+                    onChange={(value) =>
+                      setRelationship((current) => ({
+                        ...current,
+                        products: current.products.map((candidate) => {
+                          if (candidate.id !== product.id) {
+                            return candidate;
+                          }
+
+                          const lgdPct = candidate.lgdPct ?? 30;
+                          return {
+                            ...candidate,
+                            pdPct: value,
+                            expectedLossBps: (value / 100) * (lgdPct / 100) * 10_000,
+                          };
+                        }),
+                      }))
+                    }
+                  />
+                  <Field
+                    label="LGD"
+                    value={product.lgdPct ?? 30}
+                    suffix="%"
+                    step="0.01"
+                    onChange={(value) =>
+                      setRelationship((current) => ({
+                        ...current,
+                        products: current.products.map((candidate) => {
+                          if (candidate.id !== product.id) {
+                            return candidate;
+                          }
+
+                          const pdPct = candidate.pdPct ?? 2;
+                          return {
+                            ...candidate,
+                            lgdPct: value,
+                            expectedLossBps: (pdPct / 100) * (value / 100) * 10_000,
+                          };
+                        }),
+                      }))
+                    }
+                  />
+                  <Field
+                    label="Servicing Cost"
+                    value={product.servicingCost}
+                    suffix="$"
+                    onChange={(value) =>
+                      setRelationship((current) => ({
+                        ...current,
+                        products: updateProduct(
+                          current.products,
+                          product.id,
+                          "servicingCost",
+                          value,
+                        ),
+                      }))
+                    }
+                  />
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {workflow === "admin" && (
+        <section className={styles.sectionCard}>
+          <div className={styles.sectionHeading}>
+            <div>
+              <p className={styles.sectionEyebrow}>Admin Studio</p>
+              <h2>Relationship, obligor, and obligation setup</h2>
+            </div>
+          </div>
+          <div className={styles.formGrid}>
+            <SelectField
+              label="Context"
+              value={adminEntry.context}
+              options={["relationship", "obligor", "obligation"]}
+              onChange={(value) => setAdminEntry((current) => ({ ...current, context: value }))}
+            />
+            <TextField
+              label="Reference Name"
+              value={adminEntry.referenceName}
+              onChange={(value) =>
+                setAdminEntry((current) => ({ ...current, referenceName: value }))
+              }
+            />
+            <SelectField
+              label="Product"
+              value={adminEntry.product}
+              options={relationship.products.map((product) => product.name)}
+              onChange={(value) => setAdminEntry((current) => ({ ...current, product: value }))}
+            />
+            <Field
+              label="Loan Commitment Amount"
+              value={adminEntry.commitment}
+              suffix="$"
+              onChange={(value) => setAdminEntry((current) => ({ ...current, commitment: value }))}
+            />
+            <Field
+              label="PD"
+              value={adminEntry.pdPct}
+              suffix="%"
+              step="0.01"
+              onChange={(value) => setAdminEntry((current) => ({ ...current, pdPct: value }))}
+            />
+            <Field
+              label="LGD"
+              value={adminEntry.lgdPct}
+              suffix="%"
+              step="0.01"
+              onChange={(value) => setAdminEntry((current) => ({ ...current, lgdPct: value }))}
+            />
+            <Field
+              label="Servicing Cost"
+              value={adminEntry.servicingCost}
+              suffix="$"
+              onChange={(value) =>
+                setAdminEntry((current) => ({ ...current, servicingCost: value }))
+              }
+            />
+          </div>
+        </section>
+      )}
       </main>
     </div>
   );
@@ -721,6 +999,48 @@ function Field({
         value={Number.isFinite(value) ? value : 0}
         onChange={(event) => onChange(Number(event.target.value))}
       />
+    </label>
+  );
+}
+
+function SelectField({
+  label,
+  value,
+  options,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  options: string[];
+  onChange: (value: string) => void;
+}) {
+  return (
+    <label className={styles.field}>
+      <span>{label}</span>
+      <select value={value} onChange={(event) => onChange(event.target.value)}>
+        {options.map((option) => (
+          <option key={option} value={option}>
+            {option}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
+function TextField({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <label className={styles.field}>
+      <span>{label}</span>
+      <input type="text" value={value} onChange={(event) => onChange(event.target.value)} />
     </label>
   );
 }

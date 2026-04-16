@@ -9,8 +9,14 @@ export type ProductInput = {
   spreadBps: number;
   transferRatePct: number;
   feeBps: number;
+  feeAmount: number;
+  feeInputMode: "bps" | "dollar";
   upfrontFeeBps: number;
+  upfrontFeeAmount: number;
+  upfrontFeeInputMode: "bps" | "dollar";
   upfrontFeeYears: number;
+  pdPct?: number;
+  lgdPct?: number;
   expectedLossBps: number;
   capitalBps: number;
   servicingCost: number;
@@ -93,8 +99,14 @@ export const initialRelationship: RelationshipInput = {
       spreadBps: 290,
       transferRatePct: 4.35,
       feeBps: 18,
+      feeAmount: 45_000,
+      feeInputMode: "bps",
       upfrontFeeBps: 65,
+      upfrontFeeAmount: 162_500,
+      upfrontFeeInputMode: "bps",
       upfrontFeeYears: 5,
+      pdPct: 1.4,
+      lgdPct: 30,
       expectedLossBps: 42,
       capitalBps: 850,
       servicingCost: 110_000,
@@ -108,8 +120,14 @@ export const initialRelationship: RelationshipInput = {
       spreadBps: 255,
       transferRatePct: 4.1,
       feeBps: 35,
+      feeAmount: 63_000,
+      feeInputMode: "bps",
       upfrontFeeBps: 40,
+      upfrontFeeAmount: 72_000,
+      upfrontFeeInputMode: "bps",
       upfrontFeeYears: 3,
+      pdPct: 2.1,
+      lgdPct: 27.62,
       expectedLossBps: 58,
       capitalBps: 950,
       servicingCost: 90_000,
@@ -123,8 +141,14 @@ export const initialRelationship: RelationshipInput = {
       spreadBps: 0,
       transferRatePct: 0,
       feeBps: 145,
+      feeAmount: 108_750,
+      feeInputMode: "bps",
       upfrontFeeBps: 20,
+      upfrontFeeAmount: 15_000,
+      upfrontFeeInputMode: "bps",
       upfrontFeeYears: 1,
+      pdPct: 1.2,
+      lgdPct: 23.33,
       expectedLossBps: 28,
       capitalBps: 575,
       servicingCost: 40_000,
@@ -138,14 +162,18 @@ export function calculateRelationship(
   const products = input.products.map((product) => {
     const averageBalance = product.commitment * toDecimal(product.utilizationPct);
     const recurringFees =
-      averageBalance * toRate(product.feeBps) +
-      (product.type === "revolver"
-        ? (product.commitment - averageBalance) * toRate(product.feeBps)
-        : 0);
+      product.feeInputMode === "dollar"
+        ? product.feeAmount
+        : averageBalance * toRate(product.feeBps) +
+          (product.type === "revolver"
+            ? (product.commitment - averageBalance) * toRate(product.feeBps)
+            : 0);
     const annualizedUpfrontFees =
-      product.commitment *
-      toRate(product.upfrontFeeBps) /
-      Math.max(product.upfrontFeeYears, 1);
+      product.upfrontFeeInputMode === "dollar"
+        ? product.upfrontFeeAmount / Math.max(product.upfrontFeeYears, 1)
+        : product.commitment *
+          toRate(product.upfrontFeeBps) /
+          Math.max(product.upfrontFeeYears, 1);
     const netInterestIncome =
       averageBalance *
       (product.type === "letterOfCredit" ? 0 : toRate(product.spreadBps));

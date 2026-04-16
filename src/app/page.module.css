@@ -67,6 +67,27 @@
   margin-bottom: 14px;
 }
 
+.workflowBar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.workflowButton {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.workflowButton[data-active="true"] {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
 .tickerTile,
 .metricCard,
 .sectionCard,
@@ -220,6 +241,14 @@
 }
 
 .field input {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+
+.field select {
   border: 1px solid var(--border);
   background: var(--surface);
   color: var(--text);
